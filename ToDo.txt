@@ -1,0 +1,9 @@
+Public file 
+with salted hashing
+
+CheckPassword in server
+It should check passwords on all method calls
+
+put password function
+  Checker if input password is correct
+  Then if true, then update password
