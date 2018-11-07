@@ -22,6 +22,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
     @Override
     public String print(String fileName, String printer) throws RemoteException {
         jobs.add(fileName);
+        AuthenticatorFileReaderWriter.getPassword("hej");
         return "From server" + fileName + " printed on " + printer;
     }
 
@@ -63,8 +64,66 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
 
     @Override
     public String status() {
-        if(isRunning) return "Printer is printing";
-        else return "Printer is idle";
+        AuthenticatorFileReaderWriter.setPassword("martin","12345","abc");
+        AuthenticatorFileReaderWriter.setPassword("benjamin","123","def");
+
+        //example of error handling:
+        if(!AuthenticatorFileReaderWriter.setPassword("mikkel","456","ghi")) {
+            //some error handling (password was not set/created
+        }
+        String[] res;
+        String password;
+        String salt;
+
+
+        res = AuthenticatorFileReaderWriter.getPassword("martin");
+        if (res == null){
+            password = "pass err";
+            salt = "salt err";
+        } else {
+            password = res[0];
+            salt = res[1];
+        }
+        System.out.println("martin password: " + password +", martin salt: " + salt);
+
+
+        res = AuthenticatorFileReaderWriter.getPassword("benjamin");
+        if (res == null){
+            password = "pass err";
+            salt = "salt err";
+        } else {
+            password = res[0];
+            salt = res[1];
+        }
+        System.out.println("benjamin password: " + password +", benjamin salt: " + salt);
+
+        res = AuthenticatorFileReaderWriter.getPassword("mikkel");
+        if (res == null){
+            password = "pass err";
+            salt = "salt err";
+        } else {
+            password = res[0];
+            salt = res[1];
+        }
+        System.out.println("mikkel password: " + password +", mikkel salt: " + salt);
+
+
+        res = AuthenticatorFileReaderWriter.getPassword("hitler-jesus");
+        if (res == null){
+            password = "pass err";
+            salt = "salt err";
+        } else {
+            password = res[0];
+            salt = res[1];
+        }
+        System.out.println("hitler-jesus password: " + password +", hitler-jesus salt: " + salt);
+
+        // have you ever asked if you love or hate hitler-jesus?
+
+        return "";
+
+        //if(isRunning) return "Printer is printing";
+        //else return "Printer is idle";
     }
 
     @Override
