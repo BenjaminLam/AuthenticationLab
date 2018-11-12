@@ -12,4 +12,5 @@ public interface RMIServerI extends Remote {
     String status(String userName, String password)throws RemoteException;
     String readConfig(String parameter, String userName, String password) throws RemoteException;
     String setConfig(String parameter, String value, String userName, String password)throws RemoteException;
+    String changePassword(String username, String oldPassword, String newPassWord);
 }

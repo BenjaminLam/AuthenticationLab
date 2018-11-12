@@ -153,6 +153,8 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
         return "Configuration for " + parameter + " was added";
     }
 
+    // Generating salt by using a Secure Random number generator as built in java lib
+    // returns a 32 byte array of randomness
     public byte[] generateSalt(){
         SecureRandom random = new SecureRandom();
         byte[] bytes = new byte[32];
@@ -160,14 +162,18 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
         return bytes;
     }
 
+    //Auxiallry function to salt the password. It should be provided with a random generated salt by
+    // calling the generate salt function.
     public byte[] saltPassword(byte[] salt, String password){
         byte[] pwInBytes = Base64.getDecoder().decode(password);
-
+        // create a new byte array of length salt + password
         byte[] saltPlusPw = new byte[salt.length + pwInBytes.length];
 
+        //add the salt to the beginning of the new array
         for(int i = 0; i<salt.length; i++){
             saltPlusPw[i]=salt[i];
         }
+        //add the password after the salt
         for(int i = 0; i<pwInBytes.length;i++){
             saltPlusPw[i+salt.length]=pwInBytes[i];
         }
@@ -181,6 +187,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
         //Extract salt and hash from string from storage
         String salt = saltAndHash[1];
         System.out.println("salt from check : " + salt);
+        //Decode the salt string with base64decoder
         byte[] saltInByteAr = Base64.getDecoder().decode(salt);
         String hashedPWFromStorage = saltAndHash[0];
         // season input password with salt
@@ -191,7 +198,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
         String inputPwHashedAsString = Base64.getEncoder().encodeToString(inputPwHashed);
         System.out.println("Input password hashed: " + inputPwHashedAsString);
         System.out.println("PW from stoage: " + hashedPWFromStorage);
-        //compare the two hashes
+        //compare the two hashes and the return the boolean value
         return inputPwHashedAsString.equals(hashedPWFromStorage);
     }
 
@@ -199,8 +206,11 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
         byte[] result = null;
 
         try {
+            //find the hash function with a default provicer
             MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+            //update the digest with input
             sha256.update(saltedInputPW);
+            // digest the input and return result
             result = sha256.digest();
             return result;
 
@@ -226,6 +236,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
             //store
             System.out.println("hashed password from storage: " + hashedPwString);
             System.out.println("salt" + saltAsString);
+            //store the password and the salt in storage file using the AutenticationFileReaderWriter
             AuthenticatorFileReaderWriter.setPassword(userName,hashedPwString,saltAsString);
             return true;
         } //GLHF with debugging
@@ -233,6 +244,17 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
         {
             return false;
         }
+    }
+
+    public String changePassword(String username, String oldPassword ,String newPassWord){
+        // check if old password is correct
+        if(checkPassword(username,oldPassword)){
+            //if it is true hash and store the password and return success
+            hashAndStorePassword(username,newPassWord);
+            return "Password were changed";
+        }
+        //Password were wrong or user name did not excist
+        return "Credentials were not correct";
     }
 
 }
