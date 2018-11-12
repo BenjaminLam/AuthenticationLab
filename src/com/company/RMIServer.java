@@ -17,6 +17,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
 
     protected RMIServer() throws RemoteException {
         super();
+        boolean b = hashAndStorePassword("benjaminHash2","password");
     }
 
     @Override
@@ -70,7 +71,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
     @Override
     public String status(String userName, String inputPassword) {
         if(!checkPassword(userName, inputPassword)) return "Credentials were incorrect";
-        boolean b = hashAndStorePassword("benjaminHash","password");
+        boolean b = hashAndStorePassword("benjaminHash2","password");
         System.out.println("store password returned: " +b);
         boolean s = checkPassword("benjaminHash","password");
         System.out.println("check password returned: " + s);
@@ -164,6 +165,13 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
 
         byte[] saltPlusPw = new byte[salt.length + pwInBytes.length];
 
+        for(int i = 0; i<salt.length; i++){
+            saltPlusPw[i]=salt[i];
+        }
+        for(int i = 0; i<pwInBytes.length;i++){
+            saltPlusPw[i+salt.length]=pwInBytes[i];
+        }
+        System.out.println("saltPlusPW: " + Base64.getEncoder().encodeToString(saltPlusPw));
         return saltPlusPw;
     }
 
@@ -182,6 +190,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
         // encode to base64
         String inputPwHashedAsString = Base64.getEncoder().encodeToString(inputPwHashed);
         System.out.println("Input password hashed: " + inputPwHashedAsString);
+        System.out.println("PW from stoage: " + hashedPWFromStorage);
         //compare the two hashes
         return inputPwHashedAsString.equals(hashedPWFromStorage);
     }
