@@ -20,14 +20,16 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
     }
 
     @Override
-    public String print(String fileName, String printer) throws RemoteException {
+    public String print(String fileName, String printer, String userName, String inputPassword) throws RemoteException {
+        if(!checkPassword(userName, inputPassword)) return "Credentials were incorrect";
         jobs.add(fileName);
         AuthenticatorFileReaderWriter.getPassword("hej");
         return "From server" + fileName + " printed on " + printer;
     }
 
     @Override
-    public String queue() {
+    public String queue(String userName, String inputPassword) {
+        if(!checkPassword(userName, inputPassword)) return "Credentials were incorrect";
         String result = "";
         for(int counter = 0;counter<jobs.size();counter++){
             result += counter + " " + jobs.get(counter) + "\n";
@@ -36,7 +38,8 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
     }
 
     @Override
-    public String topQueue(int job) {
+    public String topQueue(int job, String userName, String inputPassword) {
+        if(!checkPassword(userName, inputPassword)) return "Credentials were incorrect";
         String temp = jobs.get(job);
         ArrayList<String> tempJobs = jobs;
         tempJobs.remove(job);
@@ -49,13 +52,15 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
     }
 
     @Override
-    public String start() {
+    public String start(String userName, String inputPassword) {
+        if(!checkPassword(userName, inputPassword)) return "Credentials were incorrect";
         isRunning = true;
         return "Started printing";
     }
 
     @Override
-    public String restart() {
+    public String restart(String userName, String inputPassword) {
+        if(!checkPassword(userName, inputPassword)) return "Credentials were incorrect";
         isRunning=false;
         jobs.clear();
         isRunning=true;
@@ -63,7 +68,12 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
     }
 
     @Override
-    public String status() {
+    public String status(String userName, String inputPassword) {
+        if(!checkPassword(userName, inputPassword)) return "Credentials were incorrect";
+        boolean b = hashAndStorePassword("benjaminHash","password");
+        System.out.println("store password returned: " +b);
+        boolean s = checkPassword("benjaminHash","password");
+        System.out.println("check password returned: " + s);
         AuthenticatorFileReaderWriter.setPassword("martin","12345","abc");
         AuthenticatorFileReaderWriter.setPassword("benjamin","123","def");
 
@@ -127,7 +137,8 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
     }
 
     @Override
-    public String readConfig(String parameter) {
+    public String readConfig(String parameter, String userName, String inputPassword) {
+        if(!checkPassword(userName, inputPassword)) return "Credentials were incorrect";
         if(configurations.containsKey(parameter)){
             return configurations.get(parameter);
         }
@@ -135,7 +146,8 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
     }
 
     @Override
-    public String setConfig(String parameter, String value) {
+    public String setConfig(String parameter, String value, String userName, String inputPassword) {
+        if(!checkPassword(userName, inputPassword)) return "Credentials were incorrect";
         configurations.put(parameter,value);
         return "Configuration for " + parameter + " was added";
     }
@@ -160,6 +172,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
         String[] saltAndHash = AuthenticatorFileReaderWriter.getPassword(userName);
         //Extract salt and hash from string from storage
         String salt = saltAndHash[1];
+        System.out.println("salt from check : " + salt);
         byte[] saltInByteAr = Base64.getDecoder().decode(salt);
         String hashedPWFromStorage = saltAndHash[0];
         // season input password with salt
@@ -168,6 +181,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
         byte[] inputPwHashed = calculateHash(saltedInputPW);
         // encode to base64
         String inputPwHashedAsString = Base64.getEncoder().encodeToString(inputPwHashed);
+        System.out.println("Input password hashed: " + inputPwHashedAsString);
         //compare the two hashes
         return inputPwHashedAsString.equals(hashedPWFromStorage);
     }
@@ -188,6 +202,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
     }
 
     private boolean hashAndStorePassword(String userName, String password){
+
         try{
             // salt password
             byte[] salt = generateSalt();
@@ -200,6 +215,8 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
             //encode to string using base64
             String hashedPwString = Base64.getEncoder().encodeToString(hashedPwBytes);
             //store
+            System.out.println("hashed password from storage: " + hashedPwString);
+            System.out.println("salt" + saltAsString);
             AuthenticatorFileReaderWriter.setPassword(userName,hashedPwString,saltAsString);
             return true;
         } //GLHF with debugging

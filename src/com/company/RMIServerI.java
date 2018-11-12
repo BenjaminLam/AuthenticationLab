@@ -4,12 +4,12 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 public interface RMIServerI extends Remote {
-    String print(String fileName, String printer) throws RemoteException;
-    String queue() throws RemoteException;
-    String topQueue(int job) throws RemoteException;
-    String start() throws RemoteException;
-    String restart() throws RemoteException;
-    String status()throws RemoteException;
-    String readConfig(String parameter) throws RemoteException;
-    String setConfig(String parameter, String value)throws RemoteException;
+    String print(String fileName, String printer, String userName, String password) throws RemoteException;
+    String queue(String userName, String password) throws RemoteException;
+    String topQueue(int job, String userName, String password) throws RemoteException;
+    String start(String userName, String password) throws RemoteException;
+    String restart(String userName, String password) throws RemoteException;
+    String status(String userName, String password)throws RemoteException;
+    String readConfig(String parameter, String userName, String password) throws RemoteException;
+    String setConfig(String parameter, String value, String userName, String password)throws RemoteException;
 }
