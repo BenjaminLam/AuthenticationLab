@@ -9,11 +9,11 @@ import java.io.*;
 
 public class AuthenticatorFileReaderWriter {
     //SHULD NOT BE CHANGED
-    public static final String FILELOCATION = "credentials.json";
+    private static final String FILELOCATION = "credentials.json";
     //SHULD NOT BE CHANGED
-    public static final String JSONPASSWORDKEY = "pass";
+    private static final String JSONPASSWORDKEY = "pass";
     //SHULD NOT BE CHANGED
-    public static final String JSONSALTKEY = "salt";
+    private static final String JSONSALTKEY = "salt";
 
     //Sets (if user exists) or creates (if user doesn't already exist) password/salt for a user
     //returning boolean indicating if operation was handled succesfully
@@ -77,6 +77,12 @@ public class AuthenticatorFileReaderWriter {
             return null; //could not read JSONFILE
         }
         return result;
+    }
+
+    public static void resetPasswordFile(){
+        File passwordFile = new File(FILELOCATION);
+        if(passwordFile.exists())
+            passwordFile.delete();
     }
 
 

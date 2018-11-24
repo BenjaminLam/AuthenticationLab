@@ -58,8 +58,8 @@ public class AuthorizedOperationsFileReaderWriter {
         }
     }
 
-    public static List<Role> getUserRoles(String username){
-        List<Role> allowedRoles = new ArrayList<Role>();
+    public static List<Operation> getRoleOperations(Role role){
+        List<Operation> allowedOperations = new ArrayList<Operation>();
 
         JSONParser parser = new JSONParser();
         JSONObject jsonRoot;
@@ -69,30 +69,30 @@ public class AuthorizedOperationsFileReaderWriter {
             Object obj = parser.parse(new FileReader(FILELOCATION));
             jsonRoot = (JSONObject) obj;
         } catch (FileNotFoundException e) {
-            return allowedRoles;
+            return allowedOperations;
         } catch (IOException | ParseException e) {
-            return allowedRoles;
+            return allowedOperations;
         }
-        JSONArray allowedRolesJsonArray;
+        JSONArray allowedOperationsJsonArray;
         try {
-            allowedRolesJsonArray = (JSONArray) jsonRoot.get(username);
+            allowedOperationsJsonArray = (JSONArray) jsonRoot.get(role.name());
         } catch (Exception e){
-            return allowedRoles;
+            return allowedOperations;
         }
 
-        for(Object alloweLabelJsonObject : allowedRolesJsonArray) {
+        for(Object alloweOperationsJsonObject : allowedOperationsJsonArray) {
             try {
-                allowedRoles.add(Role.valueOf((String) alloweLabelJsonObject));
+                allowedOperations.add(Operation.valueOf((String) alloweOperationsJsonObject));
             } catch (Exception e){
                 //ignore wrongly formatted enums
             }
         }
 
-        return allowedRoles;
+        return allowedOperations;
     }
 
-    public static void resetAccessControlListFile(){
-        File accessControlListFile = new File(FILELOCATION);
+    public static void resetAuthorizedOperationFile(){
+        File AuthorizedOperationFile = new File(FILELOCATION);
 
         try{ //clear file content
             PrintWriter writer = new PrintWriter(FILELOCATION);
@@ -103,7 +103,7 @@ public class AuthorizedOperationsFileReaderWriter {
 
         }
         try {
-            accessControlListFile.createNewFile();
+            AuthorizedOperationFile.createNewFile();
         } catch (IOException e){
             //ignore
         }

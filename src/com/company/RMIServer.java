@@ -13,24 +13,29 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
     Map<String,String> configurations = new HashMap<String, String>();
 
     boolean isRunning = false;
+    private static final String ACCESSCONTROLERRMSG = "You are not authorized for this action";
 
+    IPolicyDecisionMaker decisionMaker;
 
-    protected RMIServer() throws RemoteException {
+    protected RMIServer(IPolicyDecisionMaker decisionMaker) throws RemoteException {
         super();
-        boolean b = hashAndStorePassword("benjaminHash2","password");
+        this.decisionMaker = decisionMaker;
+        //decisionMaker.reset();
+        //resetAllPasswords();
     }
 
     @Override
     public String print(String fileName, String printer, String userName, String inputPassword) throws RemoteException {
         if(!checkPassword(userName, inputPassword)) return "Credentials were incorrect";
+        if(!decisionMaker.isAllowedAccess(userName,Operation.PRINT)) return ACCESSCONTROLERRMSG;
         jobs.add(fileName);
-        AuthenticatorFileReaderWriter.getPassword("hej");
         return "From server" + fileName + " printed on " + printer;
     }
 
     @Override
     public String queue(String userName, String inputPassword) {
         if(!checkPassword(userName, inputPassword)) return "Credentials were incorrect";
+        if(!decisionMaker.isAllowedAccess(userName,Operation.QUEUE)) return ACCESSCONTROLERRMSG;
         String result = "";
         for(int counter = 0;counter<jobs.size();counter++){
             result += counter + " " + jobs.get(counter) + "\n";
@@ -41,6 +46,7 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
     @Override
     public String topQueue(int job, String userName, String inputPassword) {
         if(!checkPassword(userName, inputPassword)) return "Credentials were incorrect";
+        if(!decisionMaker.isAllowedAccess(userName,Operation.TOPQUEUE)) return ACCESSCONTROLERRMSG;
         String temp = jobs.get(job);
         ArrayList<String> tempJobs = jobs;
         tempJobs.remove(job);
@@ -55,13 +61,23 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
     @Override
     public String start(String userName, String inputPassword) {
         if(!checkPassword(userName, inputPassword)) return "Credentials were incorrect";
+        if(!decisionMaker.isAllowedAccess(userName,Operation.START)) return ACCESSCONTROLERRMSG;
         isRunning = true;
         return "Started printing";
     }
 
     @Override
+    public String stop(String userName, String inputPassword) {
+        if(!checkPassword(userName, inputPassword)) return "Credentials were incorrect";
+        if(!decisionMaker.isAllowedAccess(userName,Operation.STOP)) return ACCESSCONTROLERRMSG;
+        isRunning = false;
+        return "Stopped printing";
+    }
+
+    @Override
     public String restart(String userName, String inputPassword) {
         if(!checkPassword(userName, inputPassword)) return "Credentials were incorrect";
+        if(!decisionMaker.isAllowedAccess(userName,Operation.RESTART)) return ACCESSCONTROLERRMSG;
         isRunning=false;
         jobs.clear();
         isRunning=true;
@@ -71,75 +87,16 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
     @Override
     public String status(String userName, String inputPassword) {
         if(!checkPassword(userName, inputPassword)) return "Credentials were incorrect";
-        boolean b = hashAndStorePassword("benjaminHash2","password");
-        System.out.println("store password returned: " +b);
-        boolean s = checkPassword("benjaminHash","password");
-        System.out.println("check password returned: " + s);
-        AuthenticatorFileReaderWriter.setPassword("martin","12345","abc");
-        AuthenticatorFileReaderWriter.setPassword("benjamin","123","def");
+        if(!decisionMaker.isAllowedAccess(userName,Operation.STATUS)) return ACCESSCONTROLERRMSG;
 
-        //example of error handling:
-        if(!AuthenticatorFileReaderWriter.setPassword("mikkel","456","ghi")) {
-            //some error handling (password was not set/created
-        }
-        String[] res;
-        String password;
-        String salt;
-
-
-        res = AuthenticatorFileReaderWriter.getPassword("martin");
-        if (res == null){
-            password = "pass err";
-            salt = "salt err";
-        } else {
-            password = res[0];
-            salt = res[1];
-        }
-        System.out.println("martin password: " + password +", martin salt: " + salt);
-
-
-        res = AuthenticatorFileReaderWriter.getPassword("benjamin");
-        if (res == null){
-            password = "pass err";
-            salt = "salt err";
-        } else {
-            password = res[0];
-            salt = res[1];
-        }
-        System.out.println("benjamin password: " + password +", benjamin salt: " + salt);
-
-        res = AuthenticatorFileReaderWriter.getPassword("mikkel");
-        if (res == null){
-            password = "pass err";
-            salt = "salt err";
-        } else {
-            password = res[0];
-            salt = res[1];
-        }
-        System.out.println("mikkel password: " + password +", mikkel salt: " + salt);
-
-
-        res = AuthenticatorFileReaderWriter.getPassword("hitler-jesus");
-        if (res == null){
-            password = "pass err";
-            salt = "salt err";
-        } else {
-            password = res[0];
-            salt = res[1];
-        }
-        System.out.println("hitler-jesus password: " + password +", hitler-jesus salt: " + salt);
-
-        // have you ever asked if you love or hate hitler-jesus?
-
-        return "";
-
-        //if(isRunning) return "Printer is printing";
-        //else return "Printer is idle";
+        if(isRunning) return "Printer is printing";
+        else return "Printer is idle";
     }
 
     @Override
     public String readConfig(String parameter, String userName, String inputPassword) {
         if(!checkPassword(userName, inputPassword)) return "Credentials were incorrect";
+        if(!decisionMaker.isAllowedAccess(userName,Operation.READCONFIG)) return ACCESSCONTROLERRMSG;
         if(configurations.containsKey(parameter)){
             return configurations.get(parameter);
         }
@@ -149,8 +106,20 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
     @Override
     public String setConfig(String parameter, String value, String userName, String inputPassword) {
         if(!checkPassword(userName, inputPassword)) return "Credentials were incorrect";
+        if(!decisionMaker.isAllowedAccess(userName,Operation.SETCONFIG)) return ACCESSCONTROLERRMSG;
         configurations.put(parameter,value);
         return "Configuration for " + parameter + " was added";
+    }
+
+    @Override
+    public String changePassword(String username, String oldPassword ,String newPassWord){
+        if(!checkPassword(username,oldPassword)) //Password were wrong or user name did not excist
+            return "Credentials were not correct";
+        if(!decisionMaker.isAllowedAccess(username,Operation.START))
+            return ACCESSCONTROLERRMSG;
+
+        hashAndStorePassword(username,newPassWord);
+        return "Password were changed";
     }
 
     // Generating salt by using a Secure Random number generator as built in java lib
@@ -162,10 +131,11 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
         return bytes;
     }
 
+
     //Auxiallry function to salt the password. It should be provided with a random generated salt by
     // calling the generate salt function.
-    public byte[] saltPassword(byte[] salt, String password){
-        byte[] pwInBytes = Base64.getDecoder().decode(password);
+    private byte[] saltPassword(byte[] salt, String password){
+        byte[] pwInBytes = password.getBytes();
         // create a new byte array of length salt + password
         byte[] saltPlusPw = new byte[salt.length + pwInBytes.length];
 
@@ -181,9 +151,13 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
         return saltPlusPw;
     }
 
-    public boolean checkPassword(String userName, String password){
+    private boolean checkPassword(String userName, String password){
         //Get salt and hash from storage
         String[] saltAndHash = AuthenticatorFileReaderWriter.getPassword(userName);
+
+        if(saltAndHash == null)
+            return false;
+
         //Extract salt and hash from string from storage
         String salt = saltAndHash[1];
         System.out.println("salt from check : " + salt);
@@ -246,15 +220,22 @@ public class RMIServer extends UnicastRemoteObject implements RMIServerI {
         }
     }
 
-    public String changePassword(String username, String oldPassword ,String newPassWord){
-        // check if old password is correct
-        if(checkPassword(username,oldPassword)){
-            //if it is true hash and store the password and return success
-            hashAndStorePassword(username,newPassWord);
-            return "Password were changed";
-        }
-        //Password were wrong or user name did not excist
-        return "Credentials were not correct";
+    private void resetAllPasswords() {
+        AuthenticatorFileReaderWriter.resetPasswordFile();
+        String[] users = new String[]{
+                "Alice", //manager
+                "Bob", //janitor
+                "Cecilia", //power user
+                "David", //user
+                "Erica", //user
+                "Fred", //user
+                "George" //user
+        };
+        for (String user : users)
+            hashAndStorePassword(user,"QWERTY123");
     }
 
+    private void resetDecisionMaker(){
+        decisionMaker.reset();
+    }
 }

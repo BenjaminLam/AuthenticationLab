@@ -8,6 +8,7 @@ public interface RMIServerI extends Remote {
     String queue(String userName, String password) throws RemoteException;
     String topQueue(int job, String userName, String password) throws RemoteException;
     String start(String userName, String password) throws RemoteException;
+    String stop(String userName, String password) throws RemoteException;
     String restart(String userName, String password) throws RemoteException;
     String status(String userName, String password)throws RemoteException;
     String readConfig(String parameter, String userName, String password) throws RemoteException;

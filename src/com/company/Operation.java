@@ -3,6 +3,12 @@ package com.company;
 public enum Operation {
     PRINT,
     QUEUE,
-    TOPQUEUE
-    //...
+    TOPQUEUE,
+    START,
+    RESTART,
+    STATUS,
+    READCONFIG,
+    SETCONFIG,
+    CHANGEPASSWORD,
+    STOP
 }
